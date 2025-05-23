@@ -1,18 +1,3 @@
--- CREATE TYPE Gender AS ENUM ('MALE', 'FEMALE');
---
--- CREATE TABLE user_gender
--- (
---     male   Gender,
---     female Gender
--- );
---
--- CREATE TYPE Position AS ENUM ('ADMIN', 'PHARMACIST', 'TELLER');
---
--- CREATE TABLE positions(
---     admin_position Position,
---     pharmacist_position Position,
---     teller_position Position
--- );
 
 CREATE TYPE Gender_type AS ENUM ('MALE', 'FEMALE');
 CREATE TABLE genders
@@ -177,16 +162,74 @@ WHERE p.id IN (
     );
 
 -- Найти аптеку, в которой больше всего сотрудников
+SELECT pharmacies_id, COUNT(*) AS employee_count
+FROM employees
+GROUP BY pharmacies_id
+ORDER BY employee_count DESC
+LIMIT 1;
 
 -- Показать сотрудников, которые работают в аптеках, где продаются лекарства дороже 1000
+SELECT DISTINCT e.*
+FROM employees e
+         JOIN medicines m ON e.pharmacies_id = m.pharmacies_id
+WHERE m.price > 1000;
+
+
 -- Вывести список аптек, в которых нет ни одного лекарства с истёкшим сроком годности
+SELECT p.*
+FROM Pharmacies p
+WHERE p.id NOT IN (
+    SELECT pharmacies_id
+    FROM medicines
+    WHERE expiration_date < CURRENT_DATE
+);
+
 -- Показать имена сотрудников и количество лекарств в их аптеке
+SELECT e.full_name, COUNT(m.id) AS medicine_count
+FROM employees e
+         LEFT JOIN medicines m ON e.pharmacies_id = m.pharmacies_id
+GROUP BY e.id;
+
 -- Вывести всех сотрудников и указать “Стажер”, если у них опыт меньше 1 года, иначе - “Опытный”
+SELECT full_name, experience,
+       CASE
+           WHEN experience < 1 THEN 'Стажер'
+           ELSE 'Опытный'
+           END AS status
+FROM employees;
+
 -- Найти аптеку, в которой самый дорогой препарат
+SELECT p.*, m.name AS medicine_name, m.price
+FROM medicines m
+         JOIN Pharmacies p ON m.pharmacies_id = p.id
+ORDER BY m.price DESC
+LIMIT 1;
+
 -- Показать количество мужчин и женщин, работающих в каждой аптеке
+SELECT pharmacies_id,
+       SUM(CASE WHEN gender = 'MALE' THEN 1 ELSE 0 END) AS male_count,
+       SUM(CASE WHEN gender = 'FEMALE' THEN 1 ELSE 0 END) AS female_count
+FROM employees
+GROUP BY pharmacies_id;
+
 -- Показать аптеку с наименьшим средним стажем сотрудников
+SELECT pharmacies_id, AVG(experience) AS avg_experience
+FROM employees
+GROUP BY pharmacies_id
+ORDER BY avg_experience ASC
+LIMIT 1;
+
 -- Найти сотрудников, у которых в аптеке нет ни одного лекарства
+SELECT e.*
+FROM employees e
+         LEFT JOIN medicines m ON e.pharmacies_id = m.pharmacies_id
+WHERE m.id IS NULL;
+
 -- Показать по каждой должности средний стаж сотрудников
+SELECT position, AVG(experience) AS avg_experience
+FROM employees
+GROUP BY position;
+
 
 
 
